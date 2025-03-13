@@ -1,5 +1,7 @@
 #include <Animation.h>
 #include <raylib/raylib.h>
+#include <string>
+#include <vector>
 
 const int SCREEN_WIDTH = GetScreenWidth();
 const int SCREEN_HEIGHT = GetScreenHeight();
@@ -7,15 +9,29 @@ const int PLAYER_WIDTH = 100;
 const int PLAYER_HEIGHT = 100;
 float dt;
 
-Animation anim = (Animation){.first = 0,
-                             .last = 9,
-                             .cur = 0,
-                             .step = 1,
-                             .tile_size = 32,
-                             .begin_frame = 0,
-                             .end_frame = 9,
-                             .speed = 0.1,
-                             .duration = 0.1};
+class Object {
+  std::string name;
+  int pos_x;
+  int pos_y;
+  int obj_width;
+  int obj_height;
+  int current_animation;
+  std::vector<Animation> animations;
+
+  void draw() {
+    Animation cur_anim = animations[current_animation];
+    Texture2D cur_tex = cur_anim.texture_file;
+    DrawTexturePro(
+        cur_tex, cur_anim.animation_frame(),
+        {(float)pos_x, (float)pos_y, (float)obj_width, (float)obj_height},
+        {0, 0}, 0.0f, WHITE);
+  }
+
+  void anim_update() {
+    Animation cur_anim = animations[current_animation];
+    cur_anim.animation_update(dt);
+  }
+};
 
 int main() {
   SetConfigFlags(FLAG_WINDOW_TRANSPARENT);
