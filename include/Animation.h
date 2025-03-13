@@ -1,3 +1,7 @@
+#ifndef ANIM_H
+#define ANIM_H
+
+#include <cstdio>
 #include <raylib/raylib.h>
 typedef enum AnimationType { REPEATING = 1, ONCE = 2 } AnimationType;
 
@@ -17,17 +21,20 @@ public:
   float duration;
   Texture2D texture_file;
 
-  Animation(int first, int last, int cur, int title_size, int begin_frame,
-            int anim_type, float speed, float duration, int nframes_row,
-            char *file_path) {
+  Animation(int first, int last, int cur, int step, int tile_size,
+            int begin_frame, int end_frame, int anim_type, float speed,
+            int nframes_row, char *file_path) {
     this->first = first;
     this->last = last;
-    this->tile_size = title_size;
+    this->cur = cur;
+    this->step = step;
+    this->tile_size = tile_size;
     this->begin_frame = begin_frame;
+    this->end_frame = end_frame;
     this->anim_type = anim_type;
-    this->speed = speed;
-    this->duration = duration;
     this->nframes_row = nframes_row;
+    this->speed = speed;
+    this->duration = speed;
     load_texture(file_path);
   }
 
@@ -70,3 +77,5 @@ private:
     this->texture_file = LoadTexture(file_path);
   }
 };
+
+#endif // !ANIM_H

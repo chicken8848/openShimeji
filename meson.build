@@ -22,6 +22,6 @@ lib_dir_linux = './lib/linux/raylib'
 lib_dir_mac = './lib/mac/raylib'
 
 inc = include_directories(inc_dir)
-src_files = files(src_dir / 'main.cpp')
+subdir('src')
 
-executable('openShimeji', src_files, include_directories: inc, dependencies: dep)
+executable('openShimeji', sources, include_directories: inc, dependencies: dep)
