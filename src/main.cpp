@@ -1,25 +1,32 @@
+#include <window.h>
+#define Font XFont
+
 #include <Animation.h>
 #include <Object.h>
 #include <raylib/raylib.h>
 #include <vector>
 
-const int SCREEN_WIDTH = GetScreenWidth();
-const int SCREEN_HEIGHT = GetScreenHeight();
+#undef Font
+
 const int PLAYER_WIDTH = 100;
 const int PLAYER_HEIGHT = 100;
-const Vector2 GRAVITY = {0, 1000};
+const Vector2 GRAVITY = {0, 100};
 float dt;
 
 class PhysicsObject : public Object {
 private:
+  const float DAMP_FACTOR = 0.1;
   Vector2 velocity;
   Vector2 acceleration;
   int mass;
+  int dampening;
   std::vector<Vector4> collision_boxes;
 
 public:
-  PhysicsObject(int height, int width, int mass) : Object(height, width) {
+  PhysicsObject(int height, int width, int mass)
+      : Object(height, width, {0, 0}) {
     this->mass = mass;
+    this->dampening = this->mass * DAMP_FACTOR;
   }
 
   void add_collision_box(Vector2 pos, Vector2 dimen) {
@@ -31,10 +38,15 @@ public:
     this->acceleration = acceleration;
   }
 
+  void change_velocity(Vector2 velocity) { this->velocity = velocity; }
+
   void update() {
     update_velocity();
     update_position();
+    SetWindowPosition(this->pos.x, this->pos.y);
   }
+
+  void check_collision() {}
 
   void update_velocity() {
     Vector2 dv = (Vector2){acceleration.x * dt, acceleration.y * dt};
@@ -48,16 +60,20 @@ public:
   }
 };
 
+void process_input() {}
+
 int main() {
   SetConfigFlags(FLAG_WINDOW_TRANSPARENT);
   SetConfigFlags(FLAG_WINDOW_UNDECORATED);
-  SetConfigFlags(FLAG_WINDOW_MOUSE_PASSTHROUGH);
   SetConfigFlags(FLAG_WINDOW_TOPMOST);
-  InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "openShimeji");
+  InitWindow(PLAYER_WIDTH, PLAYER_HEIGHT, "openShimeji");
   PhysicsObject player = PhysicsObject(PLAYER_WIDTH, PLAYER_HEIGHT, 10);
   player.add_animation("../assets/CatPackFree/CatPackFree/Idle.png", 0, 9, 32,
                        0, 9, REPEATING, 0.1, 9);
   player.change_acceleration(GRAVITY);
+
+  std::vector<WindowInfo> visible_windows = getVisibleWindows();
+
   while (!WindowShouldClose()) {
     dt = GetFrameTime();
     BeginDrawing();
@@ -65,9 +81,7 @@ int main() {
     player.draw();
     player.anim_update(dt);
     player.update();
-    if (IsKeyPressed(KEY_ESCAPE)) {
-      break;
-    }
+    process_input();
     EndDrawing();
   }
   player.destroy();

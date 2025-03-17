@@ -1,3 +1,4 @@
+#include "raylib/raylib.h"
 #include <Animation.h>
 #include <Object.h>
 #include <string>
@@ -12,10 +13,11 @@ Object::Object(int obj_width, int obj_height, Vector2 pos) {
 void Object::draw() {
   Animation cur_anim = animations[current_animation];
   Texture2D cur_tex = cur_anim.texture_file;
-  DrawTexturePro(
-      cur_tex, cur_anim.animation_frame(),
-      {(float)pos.x, (float)pos.y, (float)obj_width, (float)obj_height}, {0, 0},
-      0.0f, WHITE);
+  Vector2 window_pos = GetWindowPosition();
+  DrawTexturePro(cur_tex, cur_anim.animation_frame(),
+                 {(float)pos.x - window_pos.x, (float)pos.y - window_pos.y,
+                  (float)obj_width, (float)obj_height},
+                 {0, 0}, 0.0f, WHITE);
 }
 
 void Object::anim_update(float dt) {
