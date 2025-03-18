@@ -19,6 +19,14 @@ struct WindowInfo {
   int x, y, width, height;
 };
 
+int handleXError(Display *d, XErrorEvent *e) {
+  if (e->error_code == BadWindow) {
+    fprintf(stderr, "Ignoring BadWindow error (window closed?)\n");
+    return 0; // Suppress termination
+  }
+  return 1; // Pass other errors through
+}
+
 std::vector<WindowInfo> getVisibleWindows() {
   std::vector<WindowInfo> windows;
 
@@ -78,6 +86,7 @@ std::vector<WindowInfo> getVisibleWindows() {
   CFRelease(windowList);
 
 #elif __linux__
+  XSetErrorHandler(handleXError);
   Display *display = XOpenDisplay(nullptr);
   if (!display)
     return windows;
