@@ -7,12 +7,12 @@ class PhysicsObject : public Object {
 private:
   Vector2 velocity;
   Vector2 acceleration;
-  int mass;
+  float mass;
   float dampening;
   std::vector<Vector4> collision_boxes;
 
 public:
-  PhysicsObject(int height, int width, int mass = 9999)
+  PhysicsObject(int height, int width, float mass = 9999)
       : Object(height, width, {100, 100}) {
     this->mass = mass;
     this->dampening = 1.0f / mass;

@@ -40,7 +40,7 @@ int main() {
   SetConfigFlags(FLAG_WINDOW_UNDECORATED);
   SetConfigFlags(FLAG_WINDOW_TOPMOST);
   InitWindow(PLAYER_WIDTH, PLAYER_HEIGHT, "openShimeji");
-  PhysicsObject player = PhysicsObject(PLAYER_WIDTH, PLAYER_HEIGHT, 1);
+  PhysicsObject player = PhysicsObject(PLAYER_WIDTH, PLAYER_HEIGHT, 2);
   player.pos = (Vector2){300.0f, 100.0f};
   player.add_animation("../assets/CatPackFree/CatPackFree/Idle.png", 0, 9, 32,
                        0, 9, REPEATING, 0.1, 9);
