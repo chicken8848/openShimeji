@@ -10,9 +10,9 @@
 
 #undef Font
 
-const float EPSILON = 1.0f;
 const int PLAYER_WIDTH = 100;
 const int PLAYER_HEIGHT = 100;
+const float EPSILON = PLAYER_HEIGHT / 4;
 const Vector2 GRAVITY = {0, 500};
 float dt;
 std::vector<PhysicsObject> physics_queue;

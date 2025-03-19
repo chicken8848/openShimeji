@@ -54,11 +54,14 @@ public:
     return false;
   }
 
-  bool check_collision(Vector2 pos, std::vector<PhysicsObject> collision_objs) {
+  bool check_collision(Vector2 pos, std::vector<PhysicsObject> collision_objs,
+                       Vector2 *new_pos) {
     for (PhysicsObject collision_obj : collision_objs) {
       bool collide = check_collision(pos, collision_obj);
-      if (collide)
+      if (collide) {
+        new_pos->y = collision_obj.pos.y - this->obj_height;
         return true;
+      }
     }
     return false;
   }
@@ -72,8 +75,9 @@ public:
   void update_position(float dt, std::vector<PhysicsObject> collision_objs) {
     Vector2 ds = (Vector2){this->velocity.x * dt, this->velocity.y * dt};
     Vector2 new_pos = (Vector2){this->pos.x + ds.x, this->pos.y + ds.y};
-    if (check_collision(new_pos, collision_objs)) {
+    if (check_collision(new_pos, collision_objs, &new_pos)) {
       this->velocity.y = this->velocity.y * (float)(-1.0f * this->dampening);
+      this->pos = new_pos;
     } else {
       this->pos = new_pos;
     }
