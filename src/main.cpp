@@ -1,3 +1,4 @@
+#include <cstdlib>
 #include <window.h>
 #define Font XFont
 
@@ -9,6 +10,7 @@
 
 #undef Font
 
+const float EPSILON = 1.0f;
 const int PLAYER_WIDTH = 100;
 const int PLAYER_HEIGHT = 100;
 const Vector2 GRAVITY = {0, 500};
@@ -17,15 +19,15 @@ std::vector<PhysicsObject> physics_queue;
 
 void process_input() {}
 
-void update_physics_queue() {
+void update_physics_queue(Vector2 illegal_pos) {
   std::vector<WindowInfo> visible_windows = getVisibleWindows();
   std::vector<PhysicsObject> new_queue;
   for (WindowInfo w : visible_windows) {
-    PhysicsObject window_obj = PhysicsObject(w.width, w.height);
     Vector2 window_pos = {(float)w.x, (float)w.y};
-    if (!(window_pos.y < PLAYER_HEIGHT)) {
+    if (std::abs(window_pos.y - illegal_pos.y) > EPSILON) {
+      PhysicsObject window_obj = PhysicsObject(w.width, w.height);
       Vector2 window_dim = {(float)w.width, (float)w.height};
-      window_obj.add_collision_box({0.0f, 0.0f}, {10.0f, 10.0f});
+      window_obj.add_collision_box({0.0f, 0.0f}, {window_dim.x, 1.0f});
       window_obj.pos = window_pos;
       new_queue.push_back(window_obj);
     }
@@ -38,8 +40,8 @@ int main() {
   SetConfigFlags(FLAG_WINDOW_UNDECORATED);
   SetConfigFlags(FLAG_WINDOW_TOPMOST);
   InitWindow(PLAYER_WIDTH, PLAYER_HEIGHT, "openShimeji");
-  PhysicsObject player = PhysicsObject(PLAYER_WIDTH, PLAYER_HEIGHT, 2);
-  player.pos = (Vector2){0.0f, 0.0f};
+  PhysicsObject player = PhysicsObject(PLAYER_WIDTH, PLAYER_HEIGHT, 1);
+  player.pos = (Vector2){300.0f, 100.0f};
   player.add_animation("../assets/CatPackFree/CatPackFree/Idle.png", 0, 9, 32,
                        0, 9, REPEATING, 0.1, 9);
   player.change_acceleration(GRAVITY);
@@ -47,7 +49,7 @@ int main() {
   while (!WindowShouldClose()) {
     dt = GetFrameTime();
     BeginDrawing();
-    update_physics_queue();
+    update_physics_queue(player.pos);
     ClearBackground(BLANK);
     player.draw();
     player.anim_update(dt);

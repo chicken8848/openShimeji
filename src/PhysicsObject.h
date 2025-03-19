@@ -35,15 +35,30 @@ public:
     SetWindowPosition(this->pos.x, this->pos.y);
   }
 
-  bool collide(Vector2 box1, Vector2 box2) {}
+  bool check_collision(Vector2 pos, PhysicsObject collision_obj) {
+    for (Vector4 cb : collision_obj.collision_boxes) {
+      bool y_overlap = false;
+      bool x_overlap = false;
+      if (pos.y + this->obj_height > collision_obj.pos.y &&
+          collision_obj.pos.y + cb.w > pos.y) {
+        y_overlap = true;
+      }
+      if (pos.x + this->obj_width > collision_obj.pos.x &&
+          collision_obj.pos.x + cb.z > pos.x) {
+        x_overlap = true;
+      }
+      if (y_overlap && x_overlap) {
+        return true;
+      }
+    }
+    return false;
+  }
 
   bool check_collision(Vector2 pos, std::vector<PhysicsObject> collision_objs) {
-    for (PhysicsObject o : collision_objs) {
-      for (Vector4 cb : o.collision_boxes) {
-        if (pos.y + this->obj_height > o.pos.y && o.pos.y + cb.y > pos.y) {
-          return true;
-        }
-      }
+    for (PhysicsObject collision_obj : collision_objs) {
+      bool collide = check_collision(pos, collision_obj);
+      if (collide)
+        return true;
     }
     return false;
   }
