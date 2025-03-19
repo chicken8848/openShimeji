@@ -2,10 +2,11 @@
 #include <window.h>
 #define Font XFont
 
+#include "Pet.cpp"
 #include "PhysicsObject.h"
 #include <Animation.h>
 #include <Object.h>
-#include <random>
+#include <Rand.h>
 #include <raylib/raylib.h>
 #include <vector>
 
@@ -19,16 +20,6 @@ float dt;
 std::vector<PhysicsObject> physics_queue;
 
 void process_input() {}
-
-int get_rand_start(int start, int end) {
-  std::random_device rd;  // Seed
-  std::mt19937 gen(rd()); // Mersenne Twister PRNG
-  std::uniform_int_distribution<int> dist(start,
-                                          end); // Random int from 1 to 100
-
-  int randomNum = dist(gen);
-  return randomNum;
-}
 
 void update_physics_queue(Vector2 illegal_pos) {
   std::vector<WindowInfo> visible_windows = getVisibleWindows();
@@ -55,11 +46,33 @@ int main() {
   int mon_width = GetMonitorWidth(GetCurrentMonitor());
   int mon_height = GetMonitorHeight(GetCurrentMonitor());
 
-  PhysicsObject player = PhysicsObject(PLAYER_WIDTH, PLAYER_HEIGHT, 2);
-  player.pos = (Vector2){(float)get_rand_start(0, mon_width),
-                         (float)get_rand_start(0, mon_height / 2)};
-  player.add_animation("../assets/CatPackFree/CatPackFree/Idle.png", 0, 9, 32,
-                       0, 9, REPEATING, 0.1, 9);
+  Pet player = Pet(PLAYER_WIDTH, PLAYER_HEIGHT, 2);
+  player.pos = (Vector2){(float)get_rand(0, mon_width),
+                         (float)get_rand(0, mon_height / 2)};
+  player.add_animation_with_state(IDLE,
+                                  "../assets/CatPackFree/CatPackFree/Idle.png",
+                                  0, 8, 32, 0, 8, REPEATING, 0.1, 8);
+  player.add_animation_with_state(
+      CARRIED, "../assets/CatPackPaid/CatPackPaid/Sprites/Dance.png", 0, 3, 32,
+      0, 3, REPEATING, 0.1, 3);
+  player.add_animation_with_state(
+      FALLING, "../assets/CatPackPaid/CatPackPaid/Sprites/Dance.png", 0, 3, 32,
+      0, 3, REPEATING, 0.1, 3);
+  player.add_animation_with_state(
+      AFFECTION, "../assets/CatPackPaid/CatPackPaid/Sprites/Excited.png", 0, 11,
+      32, 0, 11, REPEATING, 0.1, 11);
+  player.add_animation_with_state(
+      SLEEPING, "../assets/CatPackPaid/CatPackPaid/Sprites/Sleep.png", 0, 3, 32,
+      0, 3, REPEATING, 0.1, 3);
+  player.add_animation_with_state(
+      EATING, "../assets/CatPackPaid/CatPackPaid/Sprites/Eating.png", 0, 14, 32,
+      0, 14, REPEATING, 0.1, 14);
+  player.add_animation_with_state(
+      CRYING, "../assets/CatPackPaid/CatPackPaid/Sprites/Cry.png", 0, 3, 32, 0,
+      3, REPEATING, 0.1, 3);
+  player.add_animation_with_state(
+      SLEEPY, "../assets/CatPackPaid/CatPackPaid/Sprites/Sleepy.png", 0, 7, 32,
+      0, 7, REPEATING, 0.3, 7);
   player.change_acceleration(GRAVITY);
 
   while (!WindowShouldClose()) {
@@ -67,9 +80,7 @@ int main() {
     BeginDrawing();
     update_physics_queue(player.pos);
     ClearBackground(BLANK);
-    player.draw();
-    player.anim_update(dt);
-    player.update(dt, physics_queue);
+    player.update_pet(dt, physics_queue);
     process_input();
     EndDrawing();
   }

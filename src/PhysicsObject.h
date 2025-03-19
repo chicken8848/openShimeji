@@ -2,6 +2,7 @@
 #define PHYSOBJ_H
 
 #include <Object.h>
+#include <algorithm>
 
 class PhysicsObject : public Object {
 private:
@@ -12,8 +13,8 @@ private:
   std::vector<Vector4> collision_boxes;
 
 public:
-  PhysicsObject(int height, int width, float mass = 9999)
-      : Object(height, width, {100, 100}) {
+  PhysicsObject(int width, int height, float mass = 9999)
+      : Object(width, height, {100, 100}) {
     this->mass = mass;
     this->dampening = 1.0f / mass;
   }
@@ -27,9 +28,7 @@ public:
     this->acceleration = acceleration;
   }
 
-  void change_velocity(Vector2 velocity) { this->velocity = velocity; }
-
-  void update(float dt, std::vector<PhysicsObject> collision_objs) {
+  void update_physics(float dt, std::vector<PhysicsObject> collision_objs) {
     update_velocity(dt);
     update_position(dt, collision_objs);
     SetWindowPosition(this->pos.x, this->pos.y);
@@ -54,16 +53,24 @@ public:
     return false;
   }
 
-  bool check_collision(Vector2 pos, std::vector<PhysicsObject> collision_objs,
-                       Vector2 *new_pos) {
+  bool check_collision(Vector2 &new_pos,
+                       std::vector<PhysicsObject> collision_objs) {
+    bool collision = false;
     for (PhysicsObject collision_obj : collision_objs) {
-      bool collide = check_collision(pos, collision_obj);
+      bool collide = check_collision(new_pos, collision_obj);
       if (collide) {
-        new_pos->y = collision_obj.pos.y - this->obj_height;
-        return true;
+        new_pos.y = collision_obj.pos.y - this->obj_height;
+        if (new_pos.x < collision_obj.pos.x) {
+          new_pos.x = collision_obj.pos.x - obj_height;
+          apply_x_rebound(GetFrameTime());
+        } else if (new_pos.x > collision_obj.pos.x + collision_obj.obj_width) {
+          new_pos.x = collision_obj.pos.x + collision_obj.obj_width;
+          apply_x_rebound(GetFrameTime());
+        }
+        collision = true;
       }
     }
-    return false;
+    return collision;
   }
 
   void update_velocity(float dt) {
@@ -72,15 +79,45 @@ public:
         (Vector2){this->velocity.x + dv.x, this->velocity.y + dv.y};
   }
 
+  void update_velocity(Vector2 velocity) { this->velocity = velocity; }
+
+  Vector2 get_velocity() { return this->velocity; }
+
   void update_position(float dt, std::vector<PhysicsObject> collision_objs) {
     Vector2 ds = (Vector2){this->velocity.x * dt, this->velocity.y * dt};
     Vector2 new_pos = (Vector2){this->pos.x + ds.x, this->pos.y + ds.y};
-    if (check_collision(new_pos, collision_objs, &new_pos)) {
-      this->velocity.y = this->velocity.y * (float)(-1.0f * this->dampening);
+    if (check_collision(new_pos, collision_objs)) {
+      apply_y_rebound(dt);
+      apply_x_dampening(dt);
       this->pos = new_pos;
     } else {
       this->pos = new_pos;
     }
+  }
+
+  void apply_x_dampening(float dt) {
+    if (this->velocity.x * this->dampening > 0) {
+      this->velocity.x =
+          std::max(0.0f, this->velocity.x - this->mass * dt * 1000);
+    } else if (this->velocity.x * this->dampening < 0) {
+      this->velocity.x =
+          std::min(0.0f, this->velocity.x + this->mass * dt * 1000);
+    }
+  }
+  void apply_y_dampening(float dt) {
+    if (this->velocity.y * this->dampening > 0) {
+      this->velocity.y =
+          std::max(0.0f, this->velocity.y - this->mass * dt * 1000);
+    } else if (this->velocity.y * this->dampening < 0) {
+      this->velocity.y =
+          std::min(0.0f, this->velocity.y + this->mass * dt * 1000);
+    }
+  }
+  void apply_y_rebound(float dt) {
+    this->velocity.y = this->velocity.y * (float)(-1.0f * this->dampening);
+  }
+  void apply_x_rebound(float dt) {
+    this->velocity.x = this->velocity.x * (float)(-1.0f * this->dampening);
   }
 };
 

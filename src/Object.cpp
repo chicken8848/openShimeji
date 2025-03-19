@@ -10,14 +10,14 @@ Object::Object(int obj_width, int obj_height, Vector2 pos) {
   this->pos = pos;
 }
 
-void Object::draw() {
+void Object::draw(int direction) {
   Animation cur_anim = animations[current_animation];
   Texture2D cur_tex = cur_anim.texture_file;
-  Vector2 window_pos = GetWindowPosition();
-  DrawTexturePro(cur_tex, cur_anim.animation_frame(),
-                 {(float)pos.x - window_pos.x, (float)pos.y - window_pos.y,
-                  (float)obj_width, (float)obj_height},
-                 {0, 0}, 0.0f, WHITE);
+  Rectangle player_frame = cur_anim.animation_frame();
+  player_frame.width *= direction;
+  DrawTexturePro(cur_tex, player_frame,
+                 {0.0f, 0.0f, (float)obj_width, (float)obj_height}, {0, 0},
+                 0.0f, WHITE);
 }
 
 void Object::anim_update(float dt) {
