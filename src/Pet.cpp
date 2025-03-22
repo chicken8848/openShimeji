@@ -1,6 +1,7 @@
 #ifndef PET_H
 #define PET_H
 
+#include "Rand.h"
 #include <GlobalMouse.h>
 #include <cmath>
 #include <unordered_map>
@@ -9,6 +10,7 @@
 #include "PhysicsObject.h"
 #include "raylib/raylib.h"
 #include <algorithm>
+#include <iostream>
 
 #undef Font
 
@@ -32,16 +34,22 @@ class Pet : public PhysicsObject {
 public:
   int max_affection;
   int affection;
-  int hunger;
+  float hunger;
   // cats sleep for about 15 hours a day most awake at dusk and dawn
-  int rest;
+  float tired;
   int personality;
   PetState state;
+  PetState last_state;
   PetDirection direction;
   Vector2 last_mouse;
+  std::vector<PetState> state_stack;
   std::unordered_map<int, int> anim_map;
   Pet(int width, int height, int mass) : PhysicsObject(width, height, mass) {
     this->direction = LEFT;
+    this->tired = 0;
+    this->hunger = 0;
+    this->state = IDLE;
+    this->state_stack.push_back(IDLE);
   }
 
   bool is_mouse_in_frame() {
@@ -73,46 +81,153 @@ public:
     SetWindowPosition(this->pos.x, this->pos.y);
   }
 
-  PetState determine_state(PetState last_state) {
-    if (std::abs(get_velocity().y) > 50.0f)
-      return FALLING;
-    if (this->rest > 80)
+  PetState handle_idle_state() {
+    if (is_mouse_in_frame()) {
+      if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
+        this->state_stack.push_back(EATING);
+        return EATING;
+      } else if (GetMouseDelta().x > 10) {
+        return AFFECTION;
+      } else if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        this->state_stack.push_back(EATING);
+        return EATING;
+      }
+    } else if (this->tired > 80) {
+      this->state_stack.push_back(SLEEPING);
       return SLEEPING;
-    if (last_state == SLEEPING && this->rest > 0)
-      return SLEEPING;
-    if (this->rest > 50 && last_state != SLEEPING) {
-      return SLEEPY;
     }
-    if (last_state == SLEEPING && this->state == CARRIED) {
-      this->affection -= 50;
+    this->state_stack.push_back(IDLE);
+    return IDLE;
+  }
+
+  PetState pop_state_stack() {
+    PetState state = state_stack.back();
+    if (state_stack.size() > 0) {
+      state_stack.pop_back();
     }
-    if (this->hunger < 0) {
-      return CRYING;
+    return state;
+  }
+
+  PetState handle_sleep_state() {
+    if (this->tired <= 0) {
+      return pop_state_stack();
     }
+    if (this->state_stack.back() != SLEEPING) {
+      state_stack.push_back(SLEEPING);
+    }
+    return SLEEPING;
+  }
+
+  PetState handle_affection_state() {
     if (is_mouse_in_frame()) {
       return AFFECTION;
+    } else
+      return state_stack.back();
+  }
+
+  PetState handle_playful_state() {
+    int chance = get_rand(0, 1000);
+    if (chance > 950) {
+      return pop_state_stack();
     }
-    // if (this->affection < 50)
-    //  return CRYING;
-    if (last_state == EATING && this->hunger > 0) {
-      return EATING;
+    if (state_stack.back() != PLAYFUL) {
+      state_stack.push_back(PLAYFUL);
     }
-    return IDLE;
+    return PLAYFUL;
+  }
+
+  PetState handle_hunger_state() {
+    if (this->hunger < 0) {
+      return pop_state_stack();
+    }
+    if (state_stack.back() != EATING) {
+      state_stack.push_back(EATING);
+    }
+    return EATING;
+  }
+
+  PetState handle_sleepy_state() {
+    int chance = get_rand(0, 1000);
+    if (chance > 750) {
+      return pop_state_stack();
+    }
+    if (state_stack.back() != SLEEPY) {
+      state_stack.push_back(SLEEPY);
+    }
+    return SLEEPY;
+  }
+
+  PetState handle_crying_state() {
+    if (this->affection > 25) {
+      return pop_state_stack();
+    }
+    if (state_stack.back() != CRYING) {
+      state_stack.push_back(CRYING);
+    }
+    return CRYING;
+  }
+
+  PetState handle_falling_state() {
+    if (std::abs(get_velocity().y) < 20.0f) {
+      return state_stack.back();
+    } else
+      return FALLING;
+  }
+
+  PetState determine_state() {
+    switch (this->state) {
+    case IDLE:
+      return handle_idle_state();
+      break;
+    case SLEEPING:
+      return handle_sleep_state();
+      break;
+    case AFFECTION:
+      return handle_affection_state();
+      break;
+    case HUNGRY:
+      break;
+    case FALLING:
+      return handle_falling_state();
+      break;
+    case CARRIED:
+      return this->last_state;
+      break;
+    case HUNTING:
+      break;
+    case PLAYFUL:
+      return handle_playful_state();
+      break;
+    case EATING:
+      return handle_hunger_state();
+      break;
+    case SLEEPY:
+      return handle_sleepy_state();
+      break;
+    case CRYING:
+      return handle_crying_state();
+      break;
+    default:
+      return handle_idle_state();
+      break;
+    }
   }
 
   void update_state() {
     PetState last_state = this->state;
+    if (std::abs(get_velocity().y) > 10.0f) {
+      this->state = FALLING;
+    }
     if (is_mouse_in_frame()) {
       if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
         this->state = CARRIED;
-      } else if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) {
-        this->state = EATING;
       } else
-        this->state = determine_state(last_state);
+        this->state = determine_state();
     } else
-      this->state = determine_state(last_state);
-    if (last_state != this->state)
+      this->state = determine_state();
+    if (last_state != this->state) {
       update_animations();
+    }
   }
 
   void change_direction() {
@@ -127,7 +242,8 @@ public:
     change_direction();
   }
 
-  void update_pet(float dt, std::vector<PhysicsObject> &collision_objs) {
+  void update_pet(float dt, std::vector<PhysicsObject> &collision_objs,
+                  float screen_width, float screen_height) {
     update_state();
     switch (this->state) {
     case CARRIED:
@@ -137,7 +253,7 @@ public:
       break;
     default:
       update_attributes();
-      update_physics(dt, collision_objs);
+      update_physics(dt, collision_objs, screen_width, screen_height);
       anim_update(dt);
       draw(this->direction);
       break;
@@ -157,16 +273,21 @@ public:
     float dt = GetFrameTime();
     switch (this->state) {
     case SLEEPING:
-      this->rest -= 1 * dt;
+      this->tired -= dt;
       break;
     case AFFECTION:
-      this->affection += 1 * dt;
+      this->affection += dt;
       break;
     case EATING:
-      this->hunger -= 1 * dt;
+      this->hunger -= dt;
       break;
     default:
-      this->rest++;
+      if (tired < 60 * 60) {
+        this->tired += dt;
+      }
+      if (hunger < 1000) {
+        this->hunger += dt;
+      }
       break;
     }
   }

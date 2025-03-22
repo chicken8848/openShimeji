@@ -34,6 +34,7 @@ void update_physics_queue(Vector2 illegal_pos) {
       new_queue.push_back(window_obj);
     }
   }
+
   physics_queue = new_queue;
 }
 
@@ -73,6 +74,9 @@ int main() {
   player.add_animation_with_state(
       SLEEPY, "../assets/CatPackPaid/CatPackPaid/Sprites/Sleepy.png", 0, 7, 32,
       0, 7, REPEATING, 0.3, 7);
+  player.add_animation_with_state(
+      PLAYFUL, "../assets/CatPackPaid/CatPackPaid/Sprites/Box2.png", 0, 11, 32,
+      0, 11, REPEATING, 0.3, 11);
   player.change_acceleration(GRAVITY);
 
   while (!WindowShouldClose()) {
@@ -80,7 +84,7 @@ int main() {
     BeginDrawing();
     update_physics_queue(player.pos);
     ClearBackground(BLANK);
-    player.update_pet(dt, physics_queue);
+    player.update_pet(dt, physics_queue, mon_width, mon_height);
     process_input();
     EndDrawing();
   }

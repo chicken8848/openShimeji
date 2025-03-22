@@ -28,9 +28,10 @@ public:
     this->acceleration = acceleration;
   }
 
-  void update_physics(float dt, std::vector<PhysicsObject> collision_objs) {
+  void update_physics(float dt, std::vector<PhysicsObject> collision_objs,
+                      float screen_width, float screen_height) {
     update_velocity(dt);
-    update_position(dt, collision_objs);
+    update_position(dt, collision_objs, screen_width, screen_height);
     SetWindowPosition(this->pos.x, this->pos.y);
   }
 
@@ -83,16 +84,33 @@ public:
 
   Vector2 get_velocity() { return this->velocity; }
 
-  void update_position(float dt, std::vector<PhysicsObject> collision_objs) {
+  void update_position(float dt, std::vector<PhysicsObject> collision_objs,
+                       float screen_width, float screen_height) {
     Vector2 ds = (Vector2){this->velocity.x * dt, this->velocity.y * dt};
     Vector2 new_pos = (Vector2){this->pos.x + ds.x, this->pos.y + ds.y};
     if (check_collision(new_pos, collision_objs)) {
       apply_y_rebound(dt);
       apply_x_dampening(dt);
-      this->pos = new_pos;
-    } else {
-      this->pos = new_pos;
     }
+    if (new_pos.y > screen_height) {
+      new_pos.y = screen_height;
+      apply_y_rebound(dt);
+      apply_x_dampening(dt);
+    } else if (new_pos.y < 0) {
+      new_pos.y = 0;
+      apply_y_rebound(dt);
+      apply_x_dampening(dt);
+    }
+    if (new_pos.x + this->obj_width > screen_width) {
+      new_pos.x = screen_width - this->obj_width;
+      apply_x_rebound(dt);
+      apply_y_dampening(dt);
+    } else if (new_pos.x < 0) {
+      new_pos.x = 0;
+      apply_x_rebound(dt);
+      apply_y_dampening(dt);
+    }
+    this->pos = new_pos;
   }
 
   void apply_x_dampening(float dt) {
