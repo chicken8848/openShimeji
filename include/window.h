@@ -19,6 +19,7 @@ struct WindowInfo {
   int x, y, width, height;
 };
 
+#ifdef __linux__
 int handleXError(Display *d, XErrorEvent *e) {
   if (e->error_code == BadWindow) {
     fprintf(stderr, "Ignoring BadWindow error (window closed?)\n");
@@ -26,6 +27,7 @@ int handleXError(Display *d, XErrorEvent *e) {
   }
   return 1; // Pass other errors through
 }
+#endif
 
 std::vector<WindowInfo> getVisibleWindows() {
   std::vector<WindowInfo> windows;
