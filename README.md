@@ -1,3 +1,5 @@
 # openShimeji
 
-WIP don't expect anything
+Runs on raylib.
+
+Supports 1 pet only, customizable sprites and pet states.
